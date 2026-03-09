@@ -18,7 +18,7 @@ README.md 파일을 보고 설치 및 실행 하시오
 
 ```bash
 # 소스 클론
-git clone https://github.com/cafe24-corp/csd5_aiforge.git
+git clone https://github.com/nasodev/claude-aiforge.git
 
 # 가상환경 생성 및 활성화
 python -m venv venv
@@ -56,7 +56,3 @@ uv sync
 ```
 
 설치 후 로그를 확인할 workspace 폴더명을 지정하여 사용합니다.
-
-## 참고
-
-- [AIForge Wiki](https://wiki.simplexi.com/pages/viewpage.action?pageId=2818670169)
