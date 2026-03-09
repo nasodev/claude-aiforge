@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %} - 프로젝트{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-lg font-semibold text-zinc-100 flex items-center gap-2">
+        <i class="ph ph-folder text-indigo-400"></i> 프로젝트 관리
+    </h2>
+    <a href="/projects/new" class="btn-primary flex items-center gap-2">
+        <i class="ph ph-plus"></i> 새 프로젝트
+    </a>
+</div>
+
+{% if not projects %}
+<div class="empty-state">
+    <div class="empty-state-icon">
+        <i class="ph ph-folder-open text-3xl text-zinc-500"></i>
+    </div>
+    <h3 class="text-zinc-300 font-medium mb-2">프로젝트가 없습니다</h3>
+    <p class="text-sm text-zinc-500 mb-6">첫 번째 프로젝트를 생성하여 시작해보세요.</p>
+    <a href="/projects/new" class="empty-state-cta">
+        첫 프로젝트 만들기
+    </a>
+</div>
+{% endif %}
+
+<div class="space-y-3">
+{% for p in projects %}
+<div class="card p-5 hover:border-white/10 transition-all {{ 'opacity-50' if not p.enabled }}">
+    <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-3">
+            <span class="text-sm font-semibold text-zinc-100">{{ p.name }}</span>
+            <span class="badge {{ 'badge-blue' if p.type == 'jira' else 'badge-purple' }}">{{ p.type }}</span>
+            {% if not p.enabled %}
+            <span class="badge badge-zinc">disabled</span>
+            {% endif %}
+        </div>
+        <div class="flex items-center gap-2">
+            <form action="/projects/{{ p.id }}/toggle" method="post" style="display:inline;">
+                <button type="submit" class="btn-secondary">
+                    <i class="ph ph-{{ 'pause' if p.enabled else 'play' }}"></i> {{ '비활성화' if p.enabled else '활성화' }}
+                </button>
+            </form>
+            <a href="/projects/{{ p.id }}/edit" class="btn-secondary">
+                <i class="ph ph-pencil-simple"></i> 수정
+            </a>
+            <a href="/schedules/new?project_id={{ p.id }}" class="btn-success">
+                <i class="ph ph-plus"></i> 스케줄
+            </a>
+            <form action="/projects/{{ p.id }}/delete" method="post" style="display:inline;"
+                  onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                <button type="submit" class="btn-danger">
+                    <i class="ph ph-trash"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    {% if p.description %}
+    <p class="text-xs text-zinc-500 mb-2">{{ p.description }}</p>
+    {% endif %}
+
+    <div class="flex items-center gap-4 text-xs text-zinc-500 flex-wrap">
+        {% if p.type == 'jira' %}
+        <span>JIRA: <span class="text-blue-400">{{ p.jira_project }}</span></span>
+        <span>Label: <span class="text-blue-400">{{ p.jira_label or '—' }}</span></span>
+        <span>Status: {{ p.jira_status or '—' }}</span>
+        {% endif %}
+        <span>스케줄: {{ p.schedule_count }}개</span>
+        {% if p.running_count > 0 %}
+        <span class="text-emerald-400">{{ p.running_count }}개 실행 중</span>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+</div>
+{% endblock %}

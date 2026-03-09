@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %} - 로그 보기{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-lg font-semibold text-zinc-100 flex items-center gap-2">
+        <i class="ph ph-list-dashes text-indigo-400"></i> 로그 보기
+    </h2>
+</div>
+
+<div class="card p-6 mb-4">
+    <form id="logForm" class="flex gap-3 items-end flex-wrap">
+        <div class="flex-1 min-w-[250px]">
+            <label class="form-label">실행 폴더 (claude-code-log)</label>
+            <input type="text" name="log_dir" class="form-input" value="{{ default_log_dir }}" placeholder="/path/to/claude-code-log">
+        </div>
+        <div class="min-w-[220px]">
+            <label class="form-label">From Date</label>
+            <input type="text" name="from_date" class="form-input" value="today" placeholder="today, yesterday, 3 hours ago">
+        </div>
+        <div class="min-w-[220px]">
+            <label class="form-label">To Date (선택)</label>
+            <input type="text" name="to_date" class="form-input" value="" placeholder="today, now, 1 hour ago">
+        </div>
+        <button type="submit" class="btn-primary h-[42px]" id="btnGenerate">
+            <span id="btnText">보기</span>
+            <span id="btnSpinner" style="display:none;">생성중...</span>
+        </button>
+    </form>
+</div>
+
+<div id="errorMsg" class="rounded-xl p-3 mb-4 text-sm bg-red-500/10 border border-red-500/20 text-red-400" style="display:none;"></div>
+<div id="outputMsg" class="rounded-xl p-3 mb-4 text-sm bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" style="display:none;"></div>
+
+<div id="logFrame" style="display:none;">
+    <iframe id="logIframe" src="" class="w-full border border-white/5 rounded-2xl bg-white" style="height:calc(100vh - 260px);"></iframe>
+</div>
+
+<div id="emptyState" class="empty-state">
+    <div class="empty-state-icon">
+        <i class="ph ph-list-dashes text-3xl text-zinc-500"></i>
+    </div>
+    <h3 class="text-zinc-300 font-medium mb-2">날짜 범위를 설정하고 <strong>보기</strong>를 눌러주세요</h3>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('logForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const form = this;
+    const btn = document.getElementById('btnGenerate');
+    const btnText = document.getElementById('btnText');
+    const btnSpinner = document.getElementById('btnSpinner');
+    const errorMsg = document.getElementById('errorMsg');
+    const outputMsg = document.getElementById('outputMsg');
+    const logFrame = document.getElementById('logFrame');
+    const emptyState = document.getElementById('emptyState');
+
+    btn.disabled = true;
+    btnText.style.display = 'none';
+    btnSpinner.style.display = 'inline';
+    errorMsg.style.display = 'none';
+    outputMsg.style.display = 'none';
+
+    try {
+        const formData = new FormData(form);
+        const resp = await fetch('/logs/generate', { method: 'POST', body: formData });
+        const data = await resp.json();
+
+        if (data.success) {
+            const lines = (data.output || '').trim().split('\n').filter(l => l.trim());
+            const summary = lines.filter(l => l.includes('processed') || l.includes('Successfully')).join(' | ') || lines.slice(-1)[0] || '로그 생성 완료';
+            outputMsg.textContent = summary;
+            outputMsg.style.display = 'block';
+            emptyState.style.display = 'none';
+            logFrame.style.display = 'block';
+            document.getElementById('logIframe').src = '/logs/view/index.html?' + Date.now();
+        } else {
+            errorMsg.textContent = data.error || '로그 생성 실패';
+            errorMsg.style.display = 'block';
+        }
+    } catch (err) {
+        errorMsg.textContent = '요청 실패: ' + err.message;
+        errorMsg.style.display = 'block';
+    } finally {
+        btn.disabled = false;
+        btnText.style.display = 'inline';
+        btnSpinner.style.display = 'none';
+    }
+});
+</script>
+{% endblock %}

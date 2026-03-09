@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %} - 실행 이력{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-lg font-semibold text-zinc-100 flex items-center gap-2">
+        <i class="ph ph-terminal-window text-indigo-400"></i> 실행 이력
+    </h2>
+    <div class="flex gap-2 items-center">
+        <a href="/executions" class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors {{ 'bg-indigo-500 text-white' if not filter_status else 'bg-zinc-800 text-zinc-300 border border-white/5 hover:bg-zinc-700' }}">전체</a>
+        {% for st in ['running', 'success', 'error', 'timeout', 'killed'] %}
+        <a href="/executions?status={{ st }}" class="px-3 py-1.5 rounded-md text-xs font-medium transition-colors {{ 'bg-indigo-500 text-white' if filter_status == st else 'bg-zinc-800 text-zinc-300 border border-white/5 hover:bg-zinc-700' }}">{{ st }}</a>
+        {% endfor %}
+        <form method="post" action="/executions/clear" class="ml-4" onsubmit="return confirm('running 상태를 제외한 모든 실행 이력을 삭제합니다. 계속하시겠습니까?')">
+            <button type="submit" class="btn-danger">
+                <i class="ph ph-trash"></i> 이력 초기화
+            </button>
+        </form>
+    </div>
+</div>
+
+<div class="card overflow-hidden">
+    <table class="w-full text-left text-sm whitespace-nowrap">
+        <thead class="bg-zinc-800/50 text-zinc-400 text-xs uppercase tracking-wider border-b border-white/5">
+            <tr>
+                <th class="px-6 py-4 font-medium">시작 시간</th>
+                <th class="px-6 py-4 font-medium">프로젝트</th>
+                <th class="px-6 py-4 font-medium">이슈</th>
+                <th class="px-6 py-4 font-medium">상태</th>
+                <th class="px-6 py-4 font-medium">명령어</th>
+                <th class="px-6 py-4 font-medium">소요시간</th>
+                <th class="px-6 py-4 font-medium">PID</th>
+            </tr>
+        </thead>
+        <tbody class="divide-y divide-white/5">
+            {% for e in executions %}
+            <tr class="hover:bg-zinc-800/30 transition-colors">
+                <td class="px-6 py-4 text-zinc-500 whitespace-nowrap">{{ e.started_at }}</td>
+                <td class="px-6 py-4 text-zinc-200 font-semibold">{{ e.project_name }}</td>
+                <td class="px-6 py-4">
+                    {% if e.issue_key %}
+                    <span class="text-blue-400">{{ e.issue_key }}</span>
+                    {% else %}—{% endif %}
+                </td>
+                <td class="px-6 py-4">
+                    <span class="badge flex items-center gap-1.5 w-fit {{ 'badge-emerald' if e.status in ['success', 'running'] else 'badge-red' if e.status in ['error', 'killed'] else 'badge-orange' }}">
+                        <span class="w-1.5 h-1.5 rounded-full bg-current {{ 'dot-pulse' if e.status == 'running' }}"></span>
+                        {{ e.status }}
+                    </span>
+                </td>
+                <td class="px-6 py-4 text-indigo-300 font-mono text-xs max-w-[300px] overflow-hidden text-ellipsis" title="{{ e.command }}">
+                    {{ e.command }}
+                </td>
+                <td class="px-6 py-4 text-zinc-400">{{ '%ds' % e.duration_seconds if e.duration_seconds else '—' }}</td>
+                <td class="px-6 py-4 text-zinc-500">{{ e.pid or '—' }}</td>
+            </tr>
+            {% if e.error_message %}
+            <tr class="bg-red-500/5">
+                <td></td>
+                <td colspan="6" class="px-6 py-2 text-red-400 text-xs">
+                    <i class="ph ph-warning"></i> {{ e.error_message }}
+                </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+            {% if not executions %}
+            <tr>
+                <td colspan="7" class="px-6 py-12 text-center text-zinc-500 bg-zinc-900/20">
+                    실행 이력이 없습니다
+                </td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

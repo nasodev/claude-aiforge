@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block title %} - 대시보드{% endblock %}
+
+{% block content %}
+<!-- KPI Cards -->
+<section class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+    <!-- Card 1: Total Projects -->
+    <div class="card p-6 hover:border-white/10 transition-all">
+        <h3 class="text-zinc-400 text-sm font-medium mb-4">전체 프로젝트</h3>
+        <div class="flex items-baseline gap-2 mb-1">
+            <span class="text-4xl font-bold text-zinc-100">{{ stats.total_projects }}</span>
+        </div>
+        <p class="text-xs text-zinc-500">{{ stats.active_projects }} active</p>
+    </div>
+
+    <!-- Card 2: Running -->
+    <div class="card p-6 hover:border-white/10 transition-all relative overflow-hidden">
+        <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500/0 via-emerald-500/50 to-emerald-500/0"></div>
+        <h3 class="text-zinc-400 text-sm font-medium mb-4 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> 실행 중
+        </h3>
+        <div class="flex items-baseline gap-2 mb-1">
+            <span class="text-4xl font-bold text-emerald-400">{{ stats.running_count }}</span>
+        </div>
+        <p class="text-xs text-zinc-500">processes</p>
+    </div>
+
+    <!-- Card 3: Total Runs -->
+    <div class="card p-6 hover:border-white/10 transition-all">
+        <h3 class="text-zinc-400 text-sm font-medium mb-4">총 실행 횟수</h3>
+        <div class="flex items-baseline gap-2 mb-1">
+            <span class="text-4xl font-bold text-zinc-100">{{ stats.total_runs }}</span>
+        </div>
+        <p class="text-xs text-zinc-500">all time</p>
+    </div>
+
+    <!-- Card 4: Token Usage -->
+    <div class="card p-6 hover:border-white/10 transition-all">
+        <div class="flex justify-between items-center mb-4">
+            <h3 class="text-zinc-400 text-sm font-medium">세션 토큰 사용량</h3>
+            <span class="text-xs text-zinc-500">한도: {{ stats.session_limit }}%</span>
+        </div>
+        <div class="flex items-baseline gap-2 mb-3">
+            <span class="text-4xl font-bold {{ 'text-red-400' if stats.session_usage >= stats.session_limit else 'text-orange-400' if stats.session_usage > 60 else 'text-emerald-400' }}">{{ stats.session_usage }}%</span>
+        </div>
+        <div class="w-full bg-zinc-800 rounded-full h-1.5 mb-1">
+            <div class="{{ 'bg-gradient-to-r from-red-500 to-red-400' if stats.session_usage >= stats.session_limit else 'bg-gradient-to-r from-orange-500 to-orange-400' if stats.session_usage > 60 else 'bg-gradient-to-r from-emerald-500 to-emerald-400' }} h-1.5 rounded-full transition-all duration-500" style="width: {{ stats.session_usage }}%"></div>
+        </div>
+    </div>
+</section>
+
+<!-- Active Schedules -->
+<section>
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-zinc-100 flex items-center gap-2">
+            <i class="ph ph-calendar-check text-indigo-400"></i> 활성 스케줄
+        </h2>
+        <a href="/schedules/new" class="btn-primary flex items-center gap-2">
+            <i class="ph ph-plus"></i> 새 스케줄
+        </a>
+    </div>
+
+    {% set active_schedules = schedules | selectattr('enabled') | list %}
+    {% if active_schedules %}
+    <div class="space-y-3">
+        {% for s in active_schedules %}
+        <div class="card p-5 hover:border-white/10 transition-all {{ 'border-emerald-500/30' if s.status == 'running' }} relative overflow-hidden">
+            {% if s.status == 'running' %}
+            <div class="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-emerald-500/0 via-emerald-500/60 to-emerald-500/0"></div>
+            {% endif %}
+            <div class="flex items-center justify-between mb-2">
+                <div class="flex items-center gap-3">
+                    <span class="text-sm font-semibold text-zinc-100">{{ s.project_name }}</span>
+                    <span class="badge {{ 'badge-blue' if s.project_type == 'jira' else 'badge-purple' }}">{{ s.project_type }}</span>
+                    <span class="badge flex items-center gap-1.5 {{ 'badge-emerald' if s.status == 'running' else 'badge-zinc' if s.status == 'idle' else 'badge-orange' if s.status == 'paused' else 'badge-red' }}">
+                        <span class="w-1.5 h-1.5 rounded-full bg-current {{ 'dot-pulse' if s.status == 'running' }}"></span>
+                        {{ s.status }}
+                    </span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="/schedules/{{ s.id }}/edit" class="btn-secondary">
+                        <i class="ph ph-pencil-simple"></i>
+                    </a>
+                    <form action="/schedules/{{ s.id }}/toggle" method="post" style="display:inline;">
+                        <button type="submit" class="btn-secondary">
+                            <i class="ph ph-{{ 'pause' if s.enabled else 'play' }}"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+            {% if s.name %}
+            <p class="text-xs text-zinc-500 mb-2">{{ s.name }}</p>
+            {% endif %}
+            <div class="flex items-center gap-4 text-xs text-zinc-500 flex-wrap">
+                <span class="flex items-center gap-1"><i class="ph ph-clock"></i> {{ s.cron_expr }}</span>
+                <span class="flex items-center gap-1"><i class="ph ph-folder"></i> {{ s.work_dir }}</span>
+                <span>마지막: {{ s.last_run_at or '—' }}</span>
+                <span class="text-emerald-400">다음: {{ s.next_run_at or '—' }}</span>
+                <span>{{ s.run_count }}회 실행</span>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="ph ph-folder-open text-3xl text-zinc-500"></i>
+        </div>
+        <h3 class="text-zinc-300 font-medium mb-2">등록된 스케줄이 없습니다</h3>
+        <p class="text-sm text-zinc-500 mb-6">첫 번째 자동화 스케줄을 생성하여 작업을 시작해보세요.</p>
+        <a href="/schedules/new" class="empty-state-cta">
+            첫 스케줄 만들기
+        </a>
+    </div>
+    {% endif %}
+</section>
+
+<!-- Recent Execution History -->
+<section>
+    <div class="flex items-center justify-between mb-4">
+        <h2 class="text-lg font-semibold text-zinc-100 flex items-center gap-2">
+            <i class="ph ph-clock-counter-clockwise text-indigo-400"></i> 최근 실행 이력
+        </h2>
+        <a href="/executions" class="btn-ghost">
+            전체 보기
+        </a>
+    </div>
+
+    <div class="card overflow-hidden">
+        <table class="w-full text-left text-sm whitespace-nowrap">
+            <thead class="bg-zinc-800/50 text-zinc-400 text-xs uppercase tracking-wider border-b border-white/5">
+                <tr>
+                    <th class="px-6 py-4 font-medium">시간</th>
+                    <th class="px-6 py-4 font-medium">프로젝트</th>
+                    <th class="px-6 py-4 font-medium">상태</th>
+                    <th class="px-6 py-4 font-medium">명령어</th>
+                    <th class="px-6 py-4 font-medium">소요시간</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-white/5">
+                {% for e in recent_executions %}
+                <tr class="hover:bg-zinc-800/30 transition-colors">
+                    <td class="px-6 py-4 text-zinc-500 whitespace-nowrap">{{ e.started_at }}</td>
+                    <td class="px-6 py-4 text-zinc-200 font-semibold">{{ e.project_name }}</td>
+                    <td class="px-6 py-4">
+                        <span class="badge {{ 'badge-emerald' if e.status in ['success', 'running'] else 'badge-red' if e.status in ['error', 'killed'] else 'badge-orange' }}">{{ e.status }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-indigo-300 font-mono text-xs max-w-[400px] overflow-hidden text-ellipsis">{{ e.command }}</td>
+                    <td class="px-6 py-4 text-zinc-400">{{ '%ds' % e.duration_seconds if e.duration_seconds else '—' }}</td>
+                </tr>
+                {% endfor %}
+                {% if not recent_executions %}
+                <tr>
+                    <td colspan="5" class="px-6 py-12 text-center text-zinc-500 bg-zinc-900/20">
+                        실행 이력이 없습니다
+                    </td>
+                </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

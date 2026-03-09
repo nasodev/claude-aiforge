@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+{% block title %} - 설정{% endblock %}
+
+{% block content %}
+<h2 class="text-lg font-semibold text-zinc-100 flex items-center gap-2 mb-6">
+    <i class="ph ph-gear text-indigo-400"></i> 자동화 설정
+</h2>
+
+<!-- Token Check -->
+<div class="card p-6 mb-4">
+    <form action="/settings/token_check" method="post">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="text-sm font-semibold text-zinc-100">Claude Token 사용량 체크</h3>
+                <p class="text-xs text-zinc-500 mt-1">claude --dangerously-skip-permissions --chrome 으로 사용량 페이지를 확인합니다</p>
+            </div>
+            <label class="toggle">
+                <input type="checkbox" name="enabled" value="on" {{ 'checked' if token_config.get('enabled') }}
+                       onchange="this.form.submit()">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+
+        {% if token_config.get('enabled') %}
+        <div class="grid grid-cols-2 gap-4">
+            <div class="panel p-4">
+                <div class="form-label">체크 간격</div>
+                <div class="flex items-center gap-2">
+                    <input class="form-input-sm" name="interval_minutes" type="number" value="{{ token_config.get('interval_minutes', 60) }}">
+                    <span class="text-zinc-500 text-xs">분</span>
+                </div>
+            </div>
+            <div class="panel p-4">
+                <div class="form-label">마지막 체크</div>
+                <div class="text-sm text-zinc-400">{{ token_status.get('last_checked') or '—' }}</div>
+                {% if token_status.get('error') %}
+                <div class="text-[10px] text-red-400 mt-1 flex items-center gap-1"><i class="ph ph-warning"></i> {{ token_status.get('error') }}</div>
+                {% endif %}
+            </div>
+            <div class="panel p-4">
+                <div class="form-label">세션 사용 한도</div>
+                <div class="flex items-center gap-2 mb-2">
+                    <input class="form-input-sm" name="session_limit_percent" type="number" value="{{ token_config.get('session_limit_percent', 80) }}">
+                    <span class="text-zinc-500 text-xs">%</span>
+                </div>
+                {% set session = (token_status.get('current_session_percent') or 0)|int %}
+                {% set session_limit = (token_config.get('session_limit_percent') or 80)|int %}
+                <div class="w-full bg-zinc-800 rounded-full h-1.5 mb-1">
+                    <div class="{{ 'bg-gradient-to-r from-red-500 to-red-400' if session >= session_limit else 'bg-gradient-to-r from-orange-500 to-orange-400' if session > 60 else 'bg-gradient-to-r from-emerald-500 to-emerald-400' }} h-1.5 rounded-full transition-all" style="width:{{ session }}%"></div>
+                </div>
+                <div class="text-[10px] text-zinc-500 mt-1">현재: {{ session }}%</div>
+            </div>
+            <div class="panel p-4">
+                <div class="form-label">주간 사용 한도</div>
+                <div class="flex items-center gap-2 mb-2">
+                    <input class="form-input-sm" name="weekly_limit_percent" type="number" value="{{ token_config.get('weekly_limit_percent', 70) }}">
+                    <span class="text-zinc-500 text-xs">%</span>
+                </div>
+                {% set weekly = (token_status.get('weekly_limit_percent') or 0)|int %}
+                {% set weekly_limit = (token_config.get('weekly_limit_percent') or 70)|int %}
+                <div class="w-full bg-zinc-800 rounded-full h-1.5 mb-1">
+                    <div class="{{ 'bg-gradient-to-r from-red-500 to-red-400' if weekly >= weekly_limit else 'bg-gradient-to-r from-orange-500 to-orange-400' if weekly > 50 else 'bg-gradient-to-r from-emerald-500 to-emerald-400' }} h-1.5 rounded-full transition-all" style="width:{{ weekly }}%"></div>
+                </div>
+                <div class="text-[10px] text-zinc-500 mt-1">현재: {{ weekly }}%</div>
+            </div>
+        </div>
+
+        {% if session >= session_limit %}
+        <div class="rounded-xl p-3 mt-4 text-sm bg-red-500/10 border border-red-500/20 text-red-400 flex items-center gap-2">
+            <i class="ph ph-warning"></i> 세션 사용량이 한도에 도달했습니다. 자동화가 일시 중지됩니다.
+        </div>
+        {% elif weekly >= weekly_limit %}
+        <div class="rounded-xl p-3 mt-4 text-sm bg-red-500/10 border border-red-500/20 text-red-400 flex items-center gap-2">
+            <i class="ph ph-warning"></i> 주간 사용량이 한도에 도달했습니다. 자동화가 일시 중지됩니다.
+        </div>
+        {% endif %}
+
+        <div class="panel p-3 mt-4">
+            <span class="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1">실행 명령어</span>
+            <code class="text-xs text-indigo-300"><span class="text-emerald-400">$</span> claude --dangerously-skip-permissions --chrome -p "...사용량 체크 프롬프트..."</code>
+        </div>
+        <p class="text-[10px] text-zinc-600 mt-2">응답 형식: {"current_session_percent": N, "weekly_limit_percent": N}</p>
+
+        <div class="mt-4 text-right">
+            <button type="submit" class="btn-primary">저장</button>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Log Monitor -->
+<div class="card p-6 mb-4">
+    <form action="/settings/log_monitor" method="post">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="text-sm font-semibold text-zinc-100">Claude 실행 로그 모니터</h3>
+                <p class="text-xs text-zinc-500 mt-1">주기적으로 실행 중인 프로세스의 PID와 로그를 확인하여 상태를 업데이트합니다</p>
+            </div>
+            <label class="toggle">
+                <input type="checkbox" name="enabled" value="on" {{ 'checked' if log_config.get('enabled') }}
+                       onchange="this.form.submit()">
+                <span class="toggle-slider"></span>
+            </label>
+        </div>
+
+        {% if log_config.get('enabled') %}
+        <div class="grid grid-cols-2 gap-4">
+            <div class="panel p-4">
+                <div class="form-label">체크 간격</div>
+                <div class="flex items-center gap-2">
+                    <input class="form-input-sm" name="interval_minutes" type="number" value="{{ log_config.get('interval_minutes', 10) }}">
+                    <span class="text-zinc-500 text-xs">분</span>
+                </div>
+            </div>
+            <div class="panel p-4">
+                <div class="form-label">마지막 체크</div>
+                <div class="text-sm text-zinc-400">{{ log_status.get('last_checked') or '—' }}</div>
+            </div>
+        </div>
+        <div class="mt-4 text-right">
+            <button type="submit" class="btn-primary">저장</button>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<!-- Global -->
+<div class="card p-6 border-red-500/10">
+    <form action="/settings/global" method="post">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h3 class="text-sm font-semibold text-red-400">전체 자동화 제어</h3>
+                <p class="text-xs text-zinc-500 mt-1">모든 프로젝트의 자동 실행을 제어합니다</p>
+            </div>
+        </div>
+        <div class="grid grid-cols-2 gap-4">
+            <div class="panel p-4">
+                <div class="form-label">한도 초과 시 자동 일시정지</div>
+                <label class="toggle">
+                    <input type="checkbox" name="auto_pause_on_limit" value="on"
+                           {{ 'checked' if global_setting.get('auto_pause_on_limit') }}>
+                    <span class="toggle-slider"></span>
+                </label>
+            </div>
+            <div class="panel p-4">
+                <div class="form-label">최대 동시 실행 수</div>
+                <input class="form-input-sm" name="max_concurrent_executions" type="number" value="{{ global_setting.get('max_concurrent_executions', 3) }}">
+            </div>
+        </div>
+        <div class="mt-4 text-right">
+            <button type="submit" class="btn-primary">저장</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

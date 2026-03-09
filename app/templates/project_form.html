@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %} - {{ '프로젝트 수정' if project else '새 프로젝트' }}{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-lg font-semibold text-zinc-100 flex items-center gap-2">
+        <i class="ph ph-folder-plus text-indigo-400"></i> {{ '프로젝트 수정' if project else '새 프로젝트' }}
+    </h2>
+    <a href="/projects" class="btn-ghost flex items-center gap-1">
+        <i class="ph ph-arrow-left"></i> 목록으로
+    </a>
+</div>
+
+<div class="card p-6 max-w-2xl">
+    <form action="{{ '/projects/%s/update' % project.id if project else '/projects/create' }}" method="post">
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="form-label">프로젝트 이름</label>
+                <input class="form-input" name="name" value="{{ project.name if project else '' }}" placeholder="FAS-JIRA" required>
+            </div>
+            <div>
+                <label class="form-label">타입</label>
+                <select class="form-input appearance-none" name="type" id="type-select" onchange="toggleJiraFields()">
+                    <option value="jira" {{ 'selected' if project and project.type == 'jira' }}>JIRA Polling</option>
+                    <option value="schedule" {{ 'selected' if project and project.type == 'schedule' }}>Schedule</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label">설명</label>
+            <input class="form-input" name="description" value="{{ project.description if project else '' }}" placeholder="프로젝트 설명">
+        </div>
+
+        <div id="jira-fields">
+            <div class="text-[10px] text-blue-400 uppercase tracking-wider font-bold mt-6 mb-3 flex items-center gap-2">
+                <i class="ph ph-ticket text-sm"></i> JIRA 설정
+            </div>
+            <div class="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                    <label class="form-label">JIRA 프로젝트</label>
+                    <input class="form-input" name="jira_project" value="{{ project.jira_project if project else '' }}" placeholder="FAS">
+                </div>
+                <div>
+                    <label class="form-label">라벨</label>
+                    <input class="form-input" name="jira_label" value="{{ project.jira_label if project else '' }}" placeholder="fullauto">
+                </div>
+            </div>
+            <div class="mb-4">
+                <label class="form-label">이슈 상태</label>
+                <select class="form-input appearance-none" name="jira_status">
+                    {% for s in ['Open', 'To Do', 'In Progress', 'In Review', 'Done'] %}
+                    <option {{ 'selected' if project and project.jira_status == s }}>{{ s }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-white/5">
+            <a href="/projects" class="btn-cancel">취소</a>
+            <button type="submit" class="btn-primary">{{ '수정' if project else '생성' }}</button>
+        </div>
+    </form>
+</div>
+
+<script>
+function toggleJiraFields() {
+    const type = document.getElementById('type-select').value;
+    document.getElementById('jira-fields').style.display = type === 'jira' ? 'block' : 'none';
+}
+toggleJiraFields();
+</script>
+{% endblock %}

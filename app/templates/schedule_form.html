@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %} - {{ '스케줄 수정' if schedule else '새 스케줄' }}{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-lg font-semibold text-zinc-100 flex items-center gap-2">
+        <i class="ph ph-clock-clockwise text-indigo-400"></i> {{ '스케줄 수정' if schedule else '새 스케줄' }}
+    </h2>
+    <a href="/schedules" class="btn-ghost flex items-center gap-1">
+        <i class="ph ph-arrow-left"></i> 목록으로
+    </a>
+</div>
+
+<div class="card p-6 max-w-2xl">
+    <form action="{{ '/schedules/%s/update' % schedule.id if schedule else '/schedules/create' }}" method="post">
+        <div class="grid grid-cols-2 gap-4 mb-4">
+            <div>
+                <label class="form-label">프로젝트</label>
+                <select class="form-input appearance-none" name="project_id" required>
+                    <option value="">선택하세요</option>
+                    {% for p in projects %}
+                    <option value="{{ p.id }}"
+                        {{ 'selected' if (schedule and schedule.project_id == p.id) or (selected_project_id == p.id) }}>
+                        {{ p.name }} ({{ p.type }})
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div>
+                <label class="form-label">스케줄 이름</label>
+                <input class="form-input" name="name" value="{{ schedule.name if schedule else '' }}" placeholder="FAS 개발 자동화">
+            </div>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label">Cron 표현식</label>
+            <input class="form-input font-mono" name="cron_expr" value="{{ schedule.cron_expr if schedule else '*/30 * * * *' }}" placeholder="*/30 * * * *" required>
+            <p class="text-[10px] text-zinc-600 mt-1.5">분 시 일 월 요일 — 예: */30 * * * * (30분마다), 0 9 * * 1-5 (평일 9시)</p>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label">작업 디렉토리</label>
+            <input class="form-input font-mono" name="work_dir" value="{{ schedule.work_dir if schedule else '' }}" placeholder="/home/dev/fas-master" required>
+        </div>
+
+        <div class="mb-4">
+            <label class="form-label">
+                프롬프트 템플릿
+                <span class="text-zinc-600 normal-case tracking-normal font-normal">JIRA 타입은 {issue_key}로 이슈키 삽입</span>
+            </label>
+            <textarea class="form-input resize-y min-h-[70px]" name="prompt_template" rows="3" placeholder="/fas-master {issue_key}을 개발해줘" required>{{ schedule.prompt_template if schedule else '' }}</textarea>
+        </div>
+
+        <!-- Command Preview -->
+        <div class="panel p-3 mb-4" id="cmd-preview">
+            <span class="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1">실행 명령어 미리보기</span>
+            <code class="text-xs text-indigo-300"><span class="text-emerald-400">$</span> <span id="preview-text">...</span></code>
+        </div>
+
+        <div class="flex justify-end gap-3 mt-6 pt-4 border-t border-white/5">
+            <a href="/schedules" class="btn-cancel">취소</a>
+            <button type="submit" class="btn-primary">{{ '수정' if schedule else '생성' }}</button>
+        </div>
+    </form>
+</div>
+
+<script>
+(function() {
+    const dirEl = document.querySelector('[name=work_dir]');
+    const promptEl = document.querySelector('[name=prompt_template]');
+    const previewEl = document.getElementById('preview-text');
+    function updatePreview() {
+        const dir = dirEl.value || '...';
+        const prompt = promptEl.value || '...';
+        previewEl.textContent =
+            'cd ' + dir + ' && claude --dangerously-skip-permissions --chrome -p "' + prompt.replace('{issue_key}', 'ISSUE-123') + '"';
+    }
+    dirEl.addEventListener('input', updatePreview);
+    promptEl.addEventListener('input', updatePreview);
+    updatePreview();
+})();
+</script>
+{% endblock %}

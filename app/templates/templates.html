@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %} - 템플릿{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-lg font-semibold text-zinc-100 flex items-center gap-2">
+        <i class="ph ph-package text-indigo-400"></i> 워크스페이스 템플릿
+    </h2>
+</div>
+
+{% if not templates %}
+<div class="empty-state">
+    <div class="empty-state-icon">
+        <i class="ph ph-package text-3xl text-zinc-500"></i>
+    </div>
+    <h3 class="text-zinc-300 font-medium mb-2">등록된 템플릿이 없습니다</h3>
+    <p class="text-sm text-zinc-500"><code class="bg-zinc-800 px-2 py-0.5 rounded text-zinc-300">workspace-templates/</code> 폴더에 템플릿을 추가하세요</p>
+</div>
+{% endif %}
+
+<div class="space-y-3">
+{% for t in templates %}
+<div class="card p-5 hover:border-white/10 transition-all">
+    <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-3">
+            <span class="text-sm font-semibold text-zinc-100">{{ t.name }}</span>
+            {% if t.has_claude %}
+            <span class="badge badge-blue">.claude</span>
+            {% endif %}
+            {% if t.has_env %}
+            <span class="badge badge-purple">.env</span>
+            {% endif %}
+            {% if t.copied %}
+            <span class="badge badge-emerald">복사됨</span>
+            {% endif %}
+        </div>
+        <div>
+            <a href="/templates/{{ t.name }}/setup" class="btn-primary">
+                {{ '다시 복사' if t.copied else '복사하기' }}
+            </a>
+        </div>
+    </div>
+
+    {% if t.description %}
+    <p class="text-xs text-zinc-500 mb-2">{{ t.description }}</p>
+    {% endif %}
+
+    <div class="flex items-center gap-4 text-xs text-zinc-500">
+        <span>대상: <code class="bg-zinc-800 px-1.5 py-0.5 rounded text-zinc-300 text-[11px]">workspace/{{ t.name }}/</code></span>
+    </div>
+</div>
+{% endfor %}
+</div>
+{% endblock %}

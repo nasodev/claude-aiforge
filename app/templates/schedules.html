@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block title %} - 스케줄{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+    <h2 class="text-lg font-semibold text-zinc-100 flex items-center gap-2">
+        <i class="ph ph-clock text-indigo-400"></i> 스케줄 관리
+    </h2>
+    <a href="/schedules/new" class="btn-primary flex items-center gap-2">
+        <i class="ph ph-plus"></i> 새 스케줄
+    </a>
+</div>
+
+{% if not schedules %}
+<div class="empty-state">
+    <div class="empty-state-icon">
+        <i class="ph ph-clock text-3xl text-zinc-500"></i>
+    </div>
+    <h3 class="text-zinc-300 font-medium mb-2">등록된 스케줄이 없습니다</h3>
+    <p class="text-sm text-zinc-500 mb-6">첫 번째 스케줄을 생성하여 시작해보세요.</p>
+    <a href="/schedules/new" class="empty-state-cta">
+        첫 스케줄 만들기
+    </a>
+</div>
+{% endif %}
+
+<div class="space-y-3">
+{% for s in schedules %}
+<div class="card p-5 hover:border-white/10 transition-all {{ 'opacity-50' if not s.enabled }} {{ 'border-emerald-500/30' if s.status == 'running' }} relative overflow-hidden">
+    {% if s.status == 'running' %}
+    <div class="absolute top-0 left-0 w-full h-0.5 bg-gradient-to-r from-emerald-500/0 via-emerald-500/60 to-emerald-500/0"></div>
+    {% endif %}
+
+    <div class="flex items-center justify-between mb-2">
+        <div class="flex items-center gap-3">
+            <span class="text-sm font-semibold text-zinc-100">{{ s.name or s.project_name }}</span>
+            <span class="badge {{ 'badge-blue' if s.project_type == 'jira' else 'badge-purple' }}">{{ s.project_type }}</span>
+            <span class="badge flex items-center gap-1.5 {{ 'badge-emerald' if s.status == 'running' else 'badge-zinc' if s.status == 'idle' else 'badge-orange' if s.status == 'paused' else 'badge-red' }}">
+                <span class="w-1.5 h-1.5 rounded-full bg-current {{ 'dot-pulse' if s.status == 'running' }}"></span>
+                {{ s.status }}
+            </span>
+        </div>
+        <div class="flex items-center gap-2">
+            <form action="/schedules/{{ s.id }}/run" method="post" style="display:inline;">
+                <button type="submit" class="btn-success" title="즉시 실행">
+                    <i class="ph ph-play"></i> 실행
+                </button>
+            </form>
+            <form action="/schedules/{{ s.id }}/toggle" method="post" style="display:inline;">
+                <button type="submit" class="btn-secondary">
+                    <i class="ph ph-{{ 'pause' if s.enabled else 'play' }}"></i>
+                </button>
+            </form>
+            <a href="/schedules/{{ s.id }}/edit" class="btn-secondary">
+                <i class="ph ph-pencil-simple"></i>
+            </a>
+            <form action="/schedules/{{ s.id }}/delete" method="post" style="display:inline;"
+                  onsubmit="return confirm('정말 삭제하시겠습니까?');">
+                <button type="submit" class="btn-danger">
+                    <i class="ph ph-trash"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="flex items-center gap-4 text-xs text-zinc-500 flex-wrap mb-3">
+        <span>프로젝트: <span class="text-zinc-200">{{ s.project_name }}</span></span>
+        <span class="flex items-center gap-1"><i class="ph ph-clock"></i> <span class="text-indigo-300">{{ s.cron_expr }}</span></span>
+        <span class="flex items-center gap-1"><i class="ph ph-folder"></i> {{ s.work_dir }}</span>
+    </div>
+
+    <!-- Command Preview -->
+    <div class="panel p-3 mb-3">
+        <span class="text-[10px] text-zinc-500 uppercase tracking-wide block mb-1">프롬프트 템플릿</span>
+        <code class="text-xs text-indigo-300"><span class="text-emerald-400">$</span> claude --dangerously-skip-permissions --chrome -p "{{ s.prompt_template }}"</code>
+    </div>
+
+    <div class="flex items-center gap-4 text-xs text-zinc-500 flex-wrap pt-3 border-t border-white/5">
+        <span>마지막: {{ s.last_run_at or '—' }}</span>
+        <span class="text-emerald-400">다음: {{ s.next_run_at or '—' }}</span>
+        <span>{{ s.run_count }}회 실행</span>
+    </div>
+</div>
+{% endfor %}
+</div>
+{% endblock %}

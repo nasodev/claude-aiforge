@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIForge{% block title %}{% endblock %}</title>
+    <link rel="icon" type="image/png" href="/static/favicon.png">
+    <!-- Preconnect -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com">
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+    <link rel="preconnect" href="https://unpkg.com">
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Pretendard Font -->
+    <link rel="stylesheet" crossorigin href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+    <!-- Phosphor Icons -->
+    <script defer src="https://unpkg.com/@phosphor-icons/web@2.1.1"></script>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body { font-family: 'Pretendard', sans-serif; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #18181b; }
+        ::-webkit-scrollbar-thumb { background: #3f3f46; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #52525b; }
+    </style>
+    <style type="text/tailwindcss">
+        /* ─── Form ─────────────────────────── */
+        .form-input {
+            @apply w-full px-3 py-2.5 rounded-lg border border-white/5 bg-zinc-950/50
+                   text-zinc-100 text-sm outline-none focus:border-indigo-500/50 transition-colors;
+        }
+        .form-input-sm {
+            @apply w-20 px-3 py-2 rounded-lg border border-white/5 bg-zinc-900/50
+                   text-zinc-100 text-sm outline-none focus:border-indigo-500/50 transition-colors;
+        }
+        .form-label {
+            @apply block text-[10px] text-zinc-500 uppercase tracking-wider font-semibold mb-2;
+        }
+        /* ─── Badges ──────────────────────── */
+        .badge       { @apply px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide; }
+        .badge-blue    { @apply bg-blue-500/10 text-blue-400 border border-blue-500/20; }
+        .badge-purple  { @apply bg-purple-500/10 text-purple-400 border border-purple-500/20; }
+        .badge-emerald { @apply bg-emerald-500/10 text-emerald-400 border border-emerald-500/20; }
+        .badge-red     { @apply bg-red-500/10 text-red-400 border border-red-500/20; }
+        .badge-orange  { @apply bg-orange-500/10 text-orange-400 border border-orange-500/20; }
+        .badge-zinc    { @apply bg-zinc-700/50 text-zinc-400 border border-zinc-600/30; }
+        /* ─── Buttons ─────────────────────── */
+        .btn-primary {
+            @apply px-4 py-2 bg-indigo-500 hover:bg-indigo-400 text-white text-sm font-medium
+                   rounded-lg transition-colors shadow-[0_0_10px_rgba(99,102,241,0.2)];
+        }
+        .btn-secondary {
+            @apply px-3 py-1.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-white/5
+                   text-xs font-medium rounded-md transition-colors;
+        }
+        .btn-danger {
+            @apply px-3 py-1.5 bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20
+                   text-xs font-medium rounded-md transition-colors;
+        }
+        .btn-success {
+            @apply px-3 py-1.5 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400
+                   border border-emerald-500/20 text-xs font-medium rounded-md transition-colors;
+        }
+        .btn-ghost {
+            @apply px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-white/5
+                   text-xs font-medium rounded-md transition-colors;
+        }
+        .btn-cancel {
+            @apply px-4 py-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-white/5
+                   text-sm font-medium rounded-lg transition-colors;
+        }
+        /* ─── Card / Panel ────────────────── */
+        .card  { @apply bg-zinc-900/40 border border-white/5 rounded-2xl backdrop-blur-sm; }
+        .panel { @apply bg-zinc-950/50 border border-white/5 rounded-lg; }
+        /* ─── Empty State ─────────────────── */
+        .empty-state {
+            @apply border border-dashed border-zinc-700 rounded-2xl bg-zinc-900/20 py-20
+                   flex flex-col items-center justify-center transition-all
+                   hover:bg-zinc-900/40 hover:border-zinc-600;
+        }
+        .empty-state-icon {
+            @apply w-16 h-16 bg-zinc-800 rounded-2xl flex items-center justify-center mb-4 shadow-inner;
+        }
+        .empty-state-cta {
+            @apply px-5 py-2.5 bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-sm font-medium
+                   rounded-lg transition-colors border border-white/5;
+        }
+    </style>
+</head>
+<body class="bg-zinc-950 text-zinc-100 min-h-screen selection:bg-indigo-500/30">
+
+    <!-- Top Navigation -->
+    <nav class="sticky top-0 z-50 bg-zinc-950/80 backdrop-blur-md border-b border-white/5">
+        <div class="max-w-[1600px] mx-auto px-6 h-16 flex items-center justify-between">
+
+            <!-- Logo area -->
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center font-bold text-sm shadow-[0_0_15px_rgba(99,102,241,0.4)]">
+                    AI
+                </div>
+                <div>
+                    <h1 class="text-base font-bold tracking-wide">AIForge</h1>
+                    <p class="text-[10px] text-zinc-500 tracking-widest font-medium uppercase">Claude Code Automation</p>
+                </div>
+            </div>
+
+            <!-- GNB Links -->
+            {% set nav_items = [
+                ('/', 'dashboard', 'squares-four', '대시보드'),
+                ('/projects', 'projects', 'folder', '프로젝트'),
+                ('/schedules', 'schedules', 'clock', '스케줄'),
+                ('/executions', 'executions', 'terminal-window', '실행이력'),
+                ('/logs', 'logs', 'list-dashes', '로그보기'),
+                ('/templates', 'templates', 'package', '템플릿'),
+                ('/settings', 'settings', 'gear', '설정'),
+            ] %}
+            <div class="hidden md:flex items-center gap-1 bg-zinc-900/50 p-1 rounded-xl border border-white/5">
+                {% for href, key, icon, label in nav_items %}
+                <a href="{{ href }}" class="flex items-center gap-2 px-4 py-2 rounded-lg {{ 'bg-zinc-800 text-zinc-100 shadow-sm' if page == key else 'text-zinc-400 hover:text-zinc-100 hover:bg-zinc-800/50' }} text-sm font-medium transition-all">
+                    <i class="ph ph-{{ icon }} text-lg"></i> {{ label }}
+                </a>
+                {% endfor %}
+            </div>
+
+            <!-- Right area -->
+            <div class="flex items-center gap-4 text-sm text-zinc-400">
+                <span class="flex items-center gap-2">
+                    <i class="ph ph-clock"></i>
+                    <span id="clock"></span>
+                </span>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-[1600px] mx-auto px-6 py-8 space-y-10">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+        (function() {
+            const el = document.getElementById('clock');
+            if (!el) return;
+            const opts = {hour12: false};
+            function tick() { el.textContent = new Date().toLocaleTimeString('ko-KR', opts); }
+            tick();
+            setInterval(tick, 1000);
+        })();
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
